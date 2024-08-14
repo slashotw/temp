@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adversarial Attack Detector</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        h1 { color: #333; }
+        #result { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Adversarial Attack Detector</h1>
+    <form id="upload-form" enctype="multipart/form-data">
+        <input type="file" name="file" accept=".png,.jpg,.jpeg">
+        <button type="submit">Upload and Analyze</button>
+    </form>
+    <div id="result"></div>
+
+    <script>
+        $(document).ready(function() {
+            $('#upload-form').on('submit', function(e) {
+                e.preventDefault();
+                var formData = new FormData(this);
+                $.ajax({
+                    url: '/',
+                    type: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function(data) {
+                        var resultHtml = '<h2>Analysis Results:</h2>';
+                        resultHtml += '<p>Is it a cat? ' + (data.is_cat ? 'Yes' : 'No') + '</p>';
+                        resultHtml += '<h3>Top 3 Predictions:</h3>';
+                        resultHtml += '<ul>';
+                        data.predictions.forEach(function(pred) {
+                            resultHtml += '<li>' + pred.class + ': ' + (pred.probability * 100).toFixed(2) + '%</li>';
+                        });
+                        resultHtml += '</ul>';
+                        $('#result').html(resultHtml);
+                    },
+                    error: function() {
+                        $('#result').html('<p>An error occurred during the upload.</p>');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

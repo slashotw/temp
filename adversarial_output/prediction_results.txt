@@ -1,0 +1,15 @@
+Top 5 Original Predictions:
+1: Labrador_retriever (0.97)
+2: bull_mastiff (0.00)
+3: golden_retriever (0.00)
+4: Chesapeake_Bay_retriever (0.00)
+5: kuvasz (0.00)
+
+Top 5 Adversarial Predictions:
+1: tabby (0.99)
+2: pug (0.00)
+3: tiger_cat (0.00)
+4: French_bulldog (0.00)
+5: tiger (0.00)
+
+平均擾動量: 0.0246

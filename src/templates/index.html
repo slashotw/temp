@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adversarial Attack Analyzer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/dropzone@5/dist/min/dropzone.min.css" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+    <style>
+        .dropzone {
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed #ccc;
+            border-radius: 5px;
+            background: #f8f8f8;
+            position: relative;
+            overflow: hidden;
+        }
+        .dropzone .dz-message {
+            text-align: center;
+        }
+        .dropzone .dz-preview {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            margin: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .dropzone .dz-preview .dz-image {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .dropzone .dz-preview .dz-image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .dropzone .dz-preview .dz-details,
+        .dropzone .dz-preview .dz-progress,
+        .dropzone .dz-preview .dz-error-mark,
+        .dropzone .dz-preview .dz-success-mark {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+    <div class="container mx-auto px-4 py-8 flex-grow">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold">Adversarial Attack Analyzer</h1>
+            <button id="infoButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                <i class="fas fa-info-circle"></i>
+            </button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">Original Image</h2>
+                <div id="original-dropzone" class="dropzone">
+                    <div class="dz-message" data-dz-message>
+                        <span class="text-lg">Drop files here or click to upload</span>
+                    </div>
+                </div>
+                <div id="result-original" class="mt-4"></div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">Adversarial Image</h2>
+                <div id="adversarial-dropzone" class="dropzone">
+                    <div class="dz-message" data-dz-message>
+                        <span class="text-lg">Drop files here or click to upload</span>
+                    </div>
+                </div>
+                <div id="result-adversarial" class="mt-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-gray-200 py-4 text-center">
+        <p>by slasho.tw</p>
+    </footer>
+
+    <!-- Info Modal (content remains the same) -->
+      <!-- Info Modal -->
+    <div id="infoModal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                About Adversarial Attack Analyzer
+                            </h3>
+                            <div class="mt-2">
+                                <ul class="list-disc pl-5 mt-2 text-sm text-gray-500">
+                                    <li>後端使用 MobileNetV2 模型</li>
+                                    <li>可以在 <a href="/imagenet_classes.txt" class="text-blue-500 hover:underline">這裡</a> 找到 imagenet_classes.txt </li>
+                                    <li>伺服器端不會儲存您上傳的圖片，辨識完後會自動從暫存區刪除</li>
+                                    <li>以下幾種動物才算貓咪🐱 : 
+                                        281, tabby<br>
+                                        282, tiger_cat<br>
+                                        283, Persian_cat<br>
+                                        284, Siamese_cat<br>
+                                        285, Egyptian_cat
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" class="closeModal mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        Dropzone.autoDiscover = false;
+
+        function initializeDropzone(elementId, resultId) {
+            return new Dropzone("#" + elementId, {
+                url: "/upload",
+                maxFiles: 1,
+                acceptedFiles: "image/*",
+                addRemoveLinks: true,
+                thumbnailWidth: null,
+                thumbnailHeight: null,
+                resizeWidth: null,
+                resizeHeight: null,
+                resizeMethod: 'contain',
+                init: function() {
+                    this.on("success", function(file, response) {
+                        displayResults(response, resultId);
+                    });
+                    this.on("error", function(file, errorMessage) {
+                        $(resultId).html('<p class="text-red-500">An error occurred: ' + errorMessage + '</p>');
+                    });
+                    this.on("addedfile", function(file) {
+                        if (this.files.length > 1) {
+                            this.removeFile(this.files[0]);
+                        }
+                        this.element.querySelector(".dz-message").style.display = "none";
+                    });
+                    this.on("removedfile", function(file) {
+                        if (this.files.length === 0) {
+                            this.element.querySelector(".dz-message").style.display = "block";
+                        }
+                    });
+                    this.on("thumbnail", function(file, dataUrl) {
+                        if (file.previewElement) {
+                            let images = file.previewElement.querySelectorAll("[data-dz-thumbnail]");
+                            for (let i = 0; i < images.length; i++) {
+                                let thumbnailElement = images[i];
+                                thumbnailElement.alt = file.name;
+                                
+                                // Create a new image to get the actual dimensions
+                                let img = new Image();
+                                img.onload = function() {
+                                    let width = this.width;
+                                    let height = this.height;
+                                    let aspectRatio = width / height;
+                                    
+                                    if (aspectRatio === 1) {
+                                        // Square image
+                                        thumbnailElement.style.width = '100%';
+                                        thumbnailElement.style.height = '100%';
+                                    } else if (aspectRatio > 1) {
+                                        // Landscape image
+                                        thumbnailElement.style.width = '100%';
+                                        thumbnailElement.style.height = 'auto';
+                                    } else {
+                                        // Portrait image
+                                        thumbnailElement.style.width = 'auto';
+                                        thumbnailElement.style.height = '100%';
+                                    }
+                                    
+                                    thumbnailElement.style.objectFit = 'contain';
+                                    thumbnailElement.style.maxWidth = '100%';
+                                    thumbnailElement.style.maxHeight = '100%';
+                                }
+                                img.src = dataUrl;
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+        function displayResults(data, resultId) {
+            var resultHtml = '<h3 class="text-lg font-semibold mt-4 mb-2">Analysis Results:</h3>';
+            resultHtml += '<p>Is it a cat? <span class="font-semibold">' + (data.is_cat ? 'Yes' : 'No') + '</span></p>';
+            resultHtml += '<h4 class="text-md font-semibold mt-2 mb-1">Top 5 Predictions:</h4>';
+            resultHtml += '<ul class="list-disc pl-5">';
+            data.predictions.forEach(function(pred) {
+                resultHtml += '<li>' + pred.class + ': <span class="font-semibold">' + (pred.probability * 100).toFixed(2) + '%</span></li>';
+            });
+            resultHtml += '</ul>';
+            $(resultId).html(resultHtml);
+        }
+
+        $(document).ready(function() {
+            initializeDropzone("original-dropzone", "#result-original");
+            initializeDropzone("adversarial-dropzone", "#result-adversarial");
+
+            $("#infoButton").click(function() {
+                $("#infoModal").removeClass('hidden');
+            });
+
+            $(".closeModal, #infoModal").click(function(e) {
+                if (e.target === this) {
+                    $("#infoModal").addClass('hidden');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
